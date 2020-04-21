@@ -22,10 +22,15 @@ def save(repo, commit, filename, before, after):
 class RepositoryProcessor:
 
     def __init__(self, repository: str):
-        self.repository = repository
+        self.repository = os.path.split(repository)[-1]
         self.repo = GitRepository(repository)
         self.mining = RepositoryMining(repository)
         self.pairs = []
+
+    def run(self):
+        self.get_all_filepairs()
+        with open(os.path.join('filepairs', self.repository, 'pairs.txt'), 'w') as f:
+            f.write('\n'.join(map(lambda x: f'{x[0]} {x[1]}', self.pairs)))
 
     def get_all_filepairs(self, file_filter=java_file_filter):
         commits = list(filter(lambda x: not x.merge, self.mining.traverse_commits()))
@@ -64,10 +69,7 @@ class RepositoryProcessor:
 @click.argument('repository')
 def filepairs(repository):
     processor = RepositoryProcessor(repository)
-    processor.get_all_filepairs()
-    pairs = processor.pairs
-    with open('filepairs/pairs.txt', 'w') as f:
-        f.write('\n'.join(map(lambda x: f'{x[0]} {x[1]}', pairs)))
+    processor.run()
 
 
 if __name__ == '__main__':
