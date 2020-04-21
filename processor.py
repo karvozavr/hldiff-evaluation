@@ -3,7 +3,11 @@ from shutil import copyfile
 import logging
 
 import click
-from pydriller import RepositoryMining, ModificationType, GitRepository, Modification
+from pydriller import RepositoryMining, ModificationType, GitRepository, Modification, Commit
+
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT, level=logging.INFO)
+logger = logging.getLogger('repository_processor')
 
 
 def java_file_filter(filename: str):
@@ -35,7 +39,6 @@ class RepositoryProcessor:
     def get_all_filepairs(self, file_filter=java_file_filter):
         commits = list(filter(lambda x: not x.merge, self.mining.traverse_commits()))
         for commit in commits:
-            logging.log(logging.INFO, f'Processing commit {commit.hash}')
             for modification in commit.modifications:
                 if modification.change_type == ModificationType.MODIFY:
                     if file_filter(modification.filename):
@@ -54,7 +57,6 @@ class RepositoryProcessor:
         self.repo.checkout(parent)
         before = os.path.join(self.repository, modification.old_path)
         before_saved = os.path.join(path, 'before_' + commit_hash + '_' + filename)
-        logging.log(logging.ERROR, before_saved)
         copyfile(before, before_saved)
 
         self.repo.checkout(commit_hash)
